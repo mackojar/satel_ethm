@@ -40,6 +40,13 @@ async def listObjects(satel: Satel, objectType: types.ObjectType, command: bytes
     LOGGER.info("Object name (%s): %s", description, deviceDescription.name)
 
 
+async def listObjectDescription(satel: Satel, objectType: types.ObjectType, objectRange: range):
+  for objectId in objectRange:
+    response = await satel.executeCommand(commands.getDeviceName(objectType, objectId))
+    deviceDescription = handlers.handleGetDeviceNameEE(response)
+    LOGGER.info("Object description: %s", deviceDescription)
+
+
 def isCommandMarked(command: types.Command, markedCommands: list):
   return command.value + 1 in markedCommands
 
@@ -78,7 +85,8 @@ async def main():
     # response = await satel.executeCommand(commands.waitForEvents())
     # await listViolatedZones(satel)
     # await listEnabledZones(satel)
-    await monitorAlarm(satel)
+    # await monitorAlarm(satel)
+    await listObjectDescription(satel, types.ObjectType.ZONE, range(1,20))
 
   except Exception as e:
       LOGGER.error("Processing error: %s." % e, exc_info=1)

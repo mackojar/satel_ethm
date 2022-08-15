@@ -30,21 +30,27 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 # partitions=2
 
 
-async def _async_load_objects(satel: Satel, objectIdRange: range, objectType: satelTypes.ObjectType) -> dict(int, types.GeneralInfo):
+async def _async_load_objects(
+        satel: Satel,
+        objectIdRange: range, 
+        objectType: satelTypes.ObjectType,
+        filterObjects: function = lambda x: True) -> dict[int, types.SatelObjectDescription]:
+
     objects: dict[int, types.SatelObjectDescription] = {}
     for objectId in objectIdRange:
         response = await satel.executeCommand(commands.getDeviceName(objectType, objectId))
         deviceDescription = handlers.handleGetDeviceNameEE(response)
-        if deviceDescription.enabled:
+        if filterObjects(deviceDescription) and deviceDescription.enabled:
             _LOGGER.debug("Object Id: %d, name: %s", objectId, deviceDescription.name)
             objects[objectId] = types.SatelObjectDescription(id=objectId, description=deviceDescription.name)
         else:
-            _LOGGER.debug("Object Id: %d: Disabled", objectId)
+            _LOGGER.debug("Object filtered out, Id: %d: Enabled: %s, Function: %d", objectId, deviceDescription.enabled, deviceDescription.function)
     return objects
 
 
 async def _async_init_satel(satel: Satel) -> types.SatelConfigEntry:
     _LOGGER.info("Load Satel configuration")
+    """ ETHM Version is not used """
     # response = await self._satel.executeCommand(commands.getETHMVersion())
     # ethmVersionInfo = handlers.handleGetETHMVersion(response)
     response = await satel.executeCommand(commands.getINTEGRAVersion())
@@ -57,7 +63,7 @@ async def _async_init_satel(satel: Satel) -> types.SatelConfigEntry:
         sw_version = integraVersionInfo.version
     )
     zones = await _async_load_objects(satel, range(1,50), satelTypes.ObjectType.ZONE)
-    outputs = await _async_load_objects(satel, range(1,30), satelTypes.ObjectType.OUTPUT)
+    outputs = await _async_load_objects(satel, range(1,30), satelTypes.ObjectType.OUTPUT, lambda objectDescription: objectDescription.function != 0)
     partitions = await _async_load_objects(satel, range(1,5), satelTypes.ObjectType.PARTITION)
     return types.SatelConfigEntry(
         device=device,
@@ -81,8 +87,6 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> types.Sat
         raise CannotConnect(e)
     finally:
         await satel.disconnect()
-    # Return info that you want to store in the config entry.
-    # return {"title": "INTEGRA 64"}
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -93,7 +97,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_show_form(step_id="user", data_schema=STEP_USER_DATA_SCHEMA)
 
         errors = {}
-
         try:
             satelConfigEntry = await validate_input(self.hass, user_input)
             return self.async_create_entry(title=satelConfigEntry["device"]["model"], data=satelConfigEntry)
