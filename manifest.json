@@ -1,0 +1,14 @@
+{
+  "domain": "satel_ethm",
+  "name": "Satel ETHM-1",
+  "config_flow": true,
+  "requirements": [],
+  "documentation": [],
+  "ssdp": [],
+  "zeroconf": [],
+  "homekit": {},
+  "dependencies": [],
+  "codeowners": [],
+  "iot_class": "local_polling",
+  "version": "0.1.0"
+}
