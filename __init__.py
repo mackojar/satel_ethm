@@ -103,7 +103,7 @@ class SatelCoordinator(DataUpdateCoordinator):
 
 
     async def _async_update_data(self):
-        _LOGGER.info("SatelCoordinator _async_update_data")
+        _LOGGER.debug("SatelCoordinator _async_update_data")
         await self._satel.connect()
         newData = await self._satel.executeCommand(commands.listDataAvailable())
         markedData = handlers.handleListDataAvailable(newData)
