@@ -15,11 +15,6 @@ class ZoneState(Enum):
     BYPASS = 6
 
 @unique
-class OutputState(Enum):
-    INACTIVE = 1
-    ACTIVE = 2
-
-@unique
 class PartitionState(Enum):
     ARMED = 1
     ALARM = 2
