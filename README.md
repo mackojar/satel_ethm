@@ -34,3 +34,4 @@ zone_name: <name of the zone>
 
 # main.py
 Main program to be used for testing Satel library and Satel interaction/API.
+
