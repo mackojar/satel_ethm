@@ -31,7 +31,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
 class ZoneEntity(CoordinatorEntity, SensorEntity):
     _attr_has_entity_name = True
-    _attr_device_class = "string"
+    _attr_device_class = "alarm.input"
     _attr_last_reset = None
     _attr_native_unit_of_measurement = None
     _attr_should_poll = True
@@ -70,6 +70,7 @@ class ZoneEntity(CoordinatorEntity, SensorEntity):
 
 class OutputEntity(CoordinatorEntity, BinarySensorEntity):
     _attr_has_entity_name = True
+    _attr_device_class = "alarm.output"
     _attr_should_poll = True
     _attr_icon = "mdi:alarm-light"
     _satelId: int
@@ -91,7 +92,7 @@ class OutputEntity(CoordinatorEntity, BinarySensorEntity):
 
 class PartitionEntity(CoordinatorEntity, SensorEntity):
     _attr_has_entity_name = True
-    _attr_device_class = "string"
+    _attr_device_class = "alarm.partition"
     _attr_last_reset = None
     _attr_native_unit_of_measurement = None
     _attr_should_poll = True
