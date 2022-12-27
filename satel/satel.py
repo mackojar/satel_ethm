@@ -47,7 +47,7 @@ class Satel:
             await self.disconnect()
             raise e
 
-    async def executeCommand(self, command) -> types.Response:
+    async def executeCommand(self, command: bytes) -> types.Response:
         try:
             request = utils.generate_query(command)
             await self._send_data(request)

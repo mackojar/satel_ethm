@@ -1,72 +1,13 @@
 import asyncio
 import logging
-import time
-import satel.commands as commands
-import satel.types as types
-import satel.handlers as handlers
 from satel.satel import Satel
+import utils.list_zones as list_zones
+import utils.list_events as list_events
+import utils.monitor_alarm as monitor_alarms
+
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s.%(msecs)03d %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 LOGGER = logging.getLogger(__name__)
-
-
-async def listEnabledZones(satel: Satel):
-  for zoneId in range(1,128):
-    response = await satel.executeCommand(commands.getDeviceName(types.ObjectType.ZONE, zoneId))
-    deviceDescription = handlers.handleGetDeviceNameEE(response)
-    if deviceDescription.enabled:
-      LOGGER.info("Zone Id: %d, name: %s, function: %d", zoneId, deviceDescription.name, deviceDescription.function)
-    else:
-      LOGGER.info("Zone Id: %d: Disabled", zoneId)
-
-
-async def listViolatedZones(satel: Satel):
-  response = await satel.executeCommand(commands.listZonesViolation())
-  violatedZones = handlers.handleListZones(response)
-  LOGGER.info("Zones violated: %s", violatedZones)
-  for zoneId in violatedZones:
-    response = await satel.executeCommand(commands.getDeviceName(types.ObjectType.ZONE, zoneId))
-    deviceDescription = handlers.handleGetDeviceNameEE(response)
-    LOGGER.info("Zone name: %s, function: %d", deviceDescription.name, deviceDescription.function)
-
-
-async def listObjects(satel: Satel, objectType: types.ObjectType, command: bytes, expectedBytes: int, description: str):
-  response = await satel.executeCommand(commands.listObjects(command))
-  markedObjects = handlers.handleListObjects(response, expectedBytes)
-  LOGGER.info("Objects for %s: %s", description, markedObjects)
-  for objectId in markedObjects:
-    response = await satel.executeCommand(commands.getDeviceName(objectType, objectId))
-    deviceDescription = handlers.handleGetDeviceNameEE(response)
-    LOGGER.info("Object name (%s): %s", description, deviceDescription.name)
-
-
-async def listObjectDescription(satel: Satel, objectType: types.ObjectType, objectRange: range):
-  for objectId in objectRange:
-    response = await satel.executeCommand(commands.getDeviceName(objectType, objectId))
-    deviceDescription = handlers.handleGetDeviceNameEE(response)
-    LOGGER.info("Object description: %s", deviceDescription)
-
-
-def isCommandMarked(command: types.Command, markedCommands: list):
-  return command.value + 1 in markedCommands
-
-
-async def monitorAlarm(satel: Satel):
-  while True:
-    await satel.connect()
-    newData = await satel.executeCommand(commands.listDataAvailable())
-    markedData = handlers.handleListDataAvailable(newData)
-    if isCommandMarked(types.Command.ZONES_VIOLATION, markedData):
-      await listObjects(satel, types.ObjectType.ZONE, types.Command.ZONES_VIOLATION, 16, "zone violated")
-    if isCommandMarked(types.Command.PARTITIONS_ARMED, markedData):
-      await listObjects(satel, types.ObjectType.PARTITION, types.Command.PARTITIONS_ARMED, 4, "partitions armed")
-    if isCommandMarked(types.Command.PARTITIONS_ALARM, markedData):
-      await listObjects(satel, types.ObjectType.PARTITION, types.Command.PARTITIONS_ALARM, 4, "partitions alarmed")
-    if isCommandMarked(types.Command.OUTPUTS_STATE, markedData):
-      await listObjects(satel, types.ObjectType.OUTPUT, types.Command.OUTPUTS_STATE, 4, "output")
-    # await satel.disconnect()
-    time.sleep(5)
-
 
 async def main():
   try:
@@ -83,13 +24,25 @@ async def main():
     # LOGGER.info("integra: %s", integraVersionInfo)
 
     # response = await satel.executeCommand(commands.waitForEvents())
-    # await listViolatedZones(satel)
-    # await listEnabledZones(satel)
-    # await monitorAlarm(satel)
-    await listObjectDescription(satel, types.ObjectType.ZONE, range(1,20))
+
+    # await listObjectDescription(satel, types.ObjectType.ZONE, range(1,20))
+    # await monitor_alarms.monitorAlarm(satel)
+    events = await list_events.listEvents(satel, 10)
+    LOGGER.info("Events:")
+    for eventData in events:
+      LOGGER.info("Event: %s: EventCls/Code: %d/%d, Obj: %d, P: %d, Src: %d" % 
+        (eventData.eventDescription.text, 
+        eventData.event.eventClass,
+        eventData.event.eventCode,
+        eventData.event.object, 
+        eventData.event.partition,
+        eventData.event.source))
+
+    # response = await satel.executeCommand(commands.waitForEvents())
+
 
   except Exception as e:
-      LOGGER.error("Processing error: %s." % e, exc_info=1)
+    LOGGER.error("Processing error: %s." % e, exc_info=1)
 
 
 asyncio.run(main())

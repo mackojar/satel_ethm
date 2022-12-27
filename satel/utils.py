@@ -57,7 +57,7 @@ def list_set_bits(r, expected_length):
     return set_bit_numbers
 
 
-def generate_query(command):
+def generate_query(command: bytes):
     data = bytearray(command)
     c = checksum(data)
     data.append(c >> 8)
