@@ -1,0 +1,12 @@
+# TODO
+- do not write DeviceInfo into ConfigEntry.data. Save required data only and create DeviceInfo when instantiating Entities
+- handle arm/disarm, select partition to arm, disable exit time if needed
+- number of outputs and zones should be related to INTEGRA type (currently: hardcoded)
+- add troubles, and other valuable information
+- add unit tests
+- any config to detect night/day arm mode? (currently hardcoded: night mode if some partitions are not armed)
+- detect INT-RS v1/v2? Any other options? (currently v2 hardcoded)
+- detect Integra version and automatically use correct number of zones, outputs and partitions
+- translations
+- progress bar/notification while initializing component
+- transmission encoding
